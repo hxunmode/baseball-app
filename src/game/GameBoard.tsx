@@ -1,0 +1,251 @@
+import { useCallback, useEffect, useReducer, useRef } from 'react';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+import {
+  BALL_SIZE,
+  BUTTON_BG,
+  CATCH_LINE,
+  FIELD_GREEN,
+  FIELD_LIGHT,
+  GAME_DURATION_SEC,
+  GLOVE_H,
+  GLOVE_W,
+  GLOVE_Y,
+  LOGICAL_H,
+  LOGICAL_W,
+  MISS_LINE,
+} from './constants';
+
+type Props = {
+  /** 부모에서 게임 재시작할 때마다 증가 */
+  sessionKey: number;
+  onGameOver: (score: number) => void;
+};
+
+function resetBall(ballX: { current: number }, ballY: { current: number }) {
+  ballX.current = Math.random() * 360;
+  ballY.current = 0;
+}
+
+export function GameBoard({ sessionKey, onGameOver }: Props) {
+  const { width: windowWidth } = useWindowDimensions();
+  const margin = 24;
+  const boardW = Math.min(LOGICAL_W, windowWidth - margin * 2);
+  const scale = boardW / LOGICAL_W;
+  const boardH = LOGICAL_H * scale;
+
+  const gloveX = useRef(170);
+  const ballX = useRef(200);
+  const ballY = useRef(0);
+  const scoreRef = useRef(0);
+  const timeLeftRef = useRef(GAME_DURATION_SEC);
+  const runningRef = useRef(false);
+  const endedRef = useRef(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [, tick] = useReducer((n) => n + 1, 0);
+
+  const endGame = useCallback(() => {
+    if (endedRef.current) return;
+    endedRef.current = true;
+    runningRef.current = false;
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    onGameOver(scoreRef.current);
+  }, [onGameOver]);
+
+  useEffect(() => {
+    endedRef.current = false;
+    runningRef.current = true;
+    gloveX.current = 170;
+    scoreRef.current = 0;
+    timeLeftRef.current = GAME_DURATION_SEC;
+    resetBall(ballX, ballY);
+
+    timerRef.current = setInterval(() => {
+      if (!runningRef.current || endedRef.current) return;
+      timeLeftRef.current -= 1;
+      tick();
+      if (timeLeftRef.current <= 0) {
+        endGame();
+      }
+    }, 1000);
+
+    let raf = 0;
+    const loop = () => {
+      if (!runningRef.current || endedRef.current) return;
+
+      ballY.current += 5 + (GAME_DURATION_SEC - timeLeftRef.current) * 0.15;
+
+      if (
+        ballY.current > CATCH_LINE &&
+        ballX.current > gloveX.current &&
+        ballX.current < gloveX.current + GLOVE_W
+      ) {
+        scoreRef.current += 1;
+        resetBall(ballX, ballY);
+      } else if (ballY.current > MISS_LINE) {
+        resetBall(ballX, ballY);
+      }
+
+      tick();
+      raf = requestAnimationFrame(loop);
+    };
+
+    raf = requestAnimationFrame(loop);
+
+    return () => {
+      runningRef.current = false;
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      cancelAnimationFrame(raf);
+    };
+  }, [sessionKey, endGame]);
+
+  const onTouch = useCallback(
+    (locationX: number) => {
+      const logicalX = locationX / scale;
+      gloveX.current = Math.max(
+        0,
+        Math.min(LOGICAL_W - GLOVE_W, logicalX - 40),
+      );
+      tick();
+    },
+    [scale],
+  );
+
+  return (
+    <View style={styles.outer}>
+      <View
+        style={[styles.board, { width: boardW, height: boardH }]}
+        onStartShouldSetResponder={() => true}
+        onMoveShouldSetResponder={() => true}
+        onResponderGrant={(e) => onTouch(e.nativeEvent.locationX)}
+        onResponderMove={(e) => onTouch(e.nativeEvent.locationX)}
+      >
+        <View style={[styles.skyStrip, { height: 120 * scale }]} />
+        <View style={styles.field} />
+
+        <View
+          style={[
+            styles.ball,
+            {
+              width: BALL_SIZE * scale,
+              height: BALL_SIZE * scale,
+              left: ballX.current * scale,
+              top: ballY.current * scale,
+            },
+          ]}
+        />
+        <View
+          style={[
+            styles.glove,
+            {
+              width: GLOVE_W * scale,
+              height: GLOVE_H * scale,
+              left: gloveX.current * scale,
+              top: GLOVE_Y * scale,
+            },
+          ]}
+        />
+
+        <Text style={[styles.hud, { fontSize: 14 * scale, left: 10 * scale, top: 8 * scale }]}>
+          Score:{scoreRef.current}
+        </Text>
+        <Text
+          style={[
+            styles.hud,
+            {
+              fontSize: 14 * scale,
+              right: 10 * scale,
+              top: 8 * scale,
+            },
+          ]}
+        >
+          Time:{timeLeftRef.current}
+        </Text>
+
+        <Text style={[styles.hint, { fontSize: 11 * scale, bottom: 6 * scale }]}>
+          손가락으로 좌우 이동
+        </Text>
+      </View>
+
+      <Pressable style={styles.abort} onPress={endGame}>
+        <Text style={styles.abortText}>종료</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  outer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    width: '100%',
+  },
+  board: {
+    position: 'relative',
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: FIELD_GREEN,
+  },
+  skyStrip: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    backgroundColor: '#87CEEB',
+  },
+  field: {
+    ...StyleSheet.absoluteFillObject,
+    top: 120,
+    backgroundColor: FIELD_LIGHT,
+  },
+  ball: {
+    position: 'absolute',
+    borderRadius: 999,
+    backgroundColor: '#f4f1de',
+    borderWidth: 2,
+    borderColor: '#c1121f',
+  },
+  glove: {
+    position: 'absolute',
+    backgroundColor: '#8B4513',
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#5c3317',
+  },
+  hud: {
+    position: 'absolute',
+    color: '#fff',
+    fontWeight: '700',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  hint: {
+    position: 'absolute',
+    alignSelf: 'center',
+    color: 'rgba(255,255,255,0.85)',
+  },
+  abort: {
+    marginTop: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: BUTTON_BG,
+    borderRadius: 24,
+  },
+  abortText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+});
