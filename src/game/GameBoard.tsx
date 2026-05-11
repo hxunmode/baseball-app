@@ -150,6 +150,7 @@ export function GameBoard({ sessionKey, onGameOver }: Props) {
   return (
     <View style={styles.outer}>
       <View style={[styles.board, { width: boardW, height: boardH }]} {...panResponder.panHandlers}>
+        <View pointerEvents="none" style={styles.baseTint} />
         <View pointerEvents="none" style={[styles.skyStrip, { height: 120 * scale }]} />
         <View pointerEvents="none" style={styles.field} />
 
@@ -223,19 +224,24 @@ const styles = StyleSheet.create({
     position: 'relative',
     borderRadius: 8,
     overflow: 'hidden',
+  },
+  baseTint: {
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: FIELD_GREEN,
+    opacity: 0.18,
   },
   skyStrip: {
     position: 'absolute',
     left: 0,
     right: 0,
     top: 0,
-    backgroundColor: '#87CEEB',
+    backgroundColor: 'rgba(135, 206, 235, 0.48)',
   },
   field: {
     ...StyleSheet.absoluteFillObject,
     top: 120,
     backgroundColor: FIELD_LIGHT,
+    opacity: 0.72,
   },
   sprite: {
     position: 'absolute',

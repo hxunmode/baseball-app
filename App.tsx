@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, ImageBackground, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import {
   BUTTON_BG,
@@ -23,6 +23,7 @@ const TEAM_OPTIONS: Array<{ key: KboTeam; image: number }> = [
   { key: '한화', image: require('./assets/team/EAGLES.png') },
   { key: 'NC', image: require('./assets/team/NC.png') },
 ];
+const BACKGROUND_IMAGE = require('./assets/background.jpeg');
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('name');
@@ -71,83 +72,85 @@ export default function App() {
     <SafeAreaProvider>
       <SafeAreaView style={styles.safe}>
         <StatusBar style="light" />
-        <View style={styles.root}>
-          {screen === 'name' && (
-            <View style={styles.center}>
-              <Text style={styles.title}>Catch to Win</Text>
-              <Text style={styles.sub}>닉네임만 입력하면 바로 시작합니다.</Text>
-              <Text style={styles.heading}>닉네임 입력</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="닉네임"
-                placeholderTextColor="#ccc"
-                value={nickname}
-                onChangeText={setNickname}
-                maxLength={12}
-              />
-              <Pressable style={styles.btn} onPress={saveName}>
-                <Text style={styles.btnText}>게임 시작</Text>
-              </Pressable>
-            </View>
-          )}
-
-          {screen === 'team' && (
-            <View style={styles.center}>
-              <Text style={styles.heading}>응원 팀 선택</Text>
-              <Text style={styles.sub}>팀 이미지를 눌러 바로 게임을 시작하세요.</Text>
-              <View style={styles.teamGrid}>
-                {TEAM_OPTIONS.map((option) => (
-                  <Pressable
-                    key={option.key}
-                    style={styles.teamCard}
-                    onPress={() => selectTeam(option.key)}
-                  >
-                    <View style={styles.teamImageFrame}>
-                      <Image source={option.image} style={styles.teamImage} resizeMode="contain" />
-                    </View>
-                    <Text style={styles.teamLabel}>{option.key}</Text>
-                  </Pressable>
-                ))}
+        <ImageBackground source={BACKGROUND_IMAGE} style={styles.root} resizeMode="cover">
+          <View style={styles.overlay}>
+            {screen === 'name' && (
+              <View style={styles.center}>
+                <Text style={styles.title}>Catch to Win</Text>
+                <Text style={styles.sub}>닉네임만 입력하면 바로 시작합니다.</Text>
+                <Text style={styles.heading}>닉네임 입력</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="닉네임"
+                  placeholderTextColor="#ccc"
+                  value={nickname}
+                  onChangeText={setNickname}
+                  maxLength={12}
+                />
+                <Pressable style={styles.btn} onPress={saveName}>
+                  <Text style={styles.btnText}>게임 시작</Text>
+                </Pressable>
               </View>
-            </View>
-          )}
+            )}
 
-          {screen === 'game' && (
-            <GameBoard sessionKey={gameSession} onGameOver={handleGameOver} />
-          )}
+            {screen === 'team' && (
+              <View style={styles.center}>
+                <Text style={styles.heading}>응원 팀 선택</Text>
+                <Text style={styles.sub}>팀 이미지를 눌러 바로 게임을 시작하세요.</Text>
+                <View style={styles.teamGrid}>
+                  {TEAM_OPTIONS.map((option) => (
+                    <Pressable
+                      key={option.key}
+                      style={styles.teamCard}
+                      onPress={() => selectTeam(option.key)}
+                    >
+                      <View style={styles.teamImageFrame}>
+                        <Image source={option.image} style={styles.teamImage} resizeMode="contain" />
+                      </View>
+                      <Text style={styles.teamLabel}>{option.key}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            )}
 
-          {screen === 'reward' && (
-            <View style={styles.center}>
-              <Text style={styles.heading}>리워드 획득!</Text>
-              <Text style={styles.emoji}>🎁</Text>
-              <Text style={styles.resultText}>
-                {(nickname.trim() || '플레이어') + '님 ' + lastScore + '개 성공!'}
-              </Text>
-              <Text style={styles.sub}>
-                {team ? `${team} 응원 미션 성공! ` : ''}
-                {REWARD_SCORE_THRESHOLD}점 이상 달성에 성공했어요.
-              </Text>
-              <Pressable style={styles.btn} onPress={resetFlow}>
-                <Text style={styles.btnText}>홈으로</Text>
-              </Pressable>
-            </View>
-          )}
+            {screen === 'game' && (
+              <GameBoard sessionKey={gameSession} onGameOver={handleGameOver} />
+            )}
 
-          {screen === 'retry' && (
-            <View style={styles.center}>
-              <Text style={styles.heading}>조금만 더!</Text>
-              <Text style={styles.resultText}>
-                {(nickname.trim() || '플레이어') + '님 ' + lastScore + '개 성공!'}
-              </Text>
-              <Text style={styles.sub}>
-                {REWARD_SCORE_THRESHOLD}점 이상 달성하면 리워드를 받을 수 있어요.
-              </Text>
-              <Pressable style={styles.btn} onPress={restartGame}>
-                <Text style={styles.btnText}>다시 도전하기</Text>
-              </Pressable>
-            </View>
-          )}
-        </View>
+            {screen === 'reward' && (
+              <View style={styles.center}>
+                <Text style={styles.heading}>리워드 획득!</Text>
+                <Text style={styles.emoji}>🎁</Text>
+                <Text style={styles.resultText}>
+                  {(nickname.trim() || '플레이어') + '님 ' + lastScore + '개 성공!'}
+                </Text>
+                <Text style={styles.sub}>
+                  {team ? `${team} 응원 미션 성공! ` : ''}
+                  {REWARD_SCORE_THRESHOLD}점 이상 달성에 성공했어요.
+                </Text>
+                <Pressable style={styles.btn} onPress={resetFlow}>
+                  <Text style={styles.btnText}>홈으로</Text>
+                </Pressable>
+              </View>
+            )}
+
+            {screen === 'retry' && (
+              <View style={styles.center}>
+                <Text style={styles.heading}>조금만 더!</Text>
+                <Text style={styles.resultText}>
+                  {(nickname.trim() || '플레이어') + '님 ' + lastScore + '개 성공!'}
+                </Text>
+                <Text style={styles.sub}>
+                  {REWARD_SCORE_THRESHOLD}점 이상 달성하면 리워드를 받을 수 있어요.
+                </Text>
+                <Pressable style={styles.btn} onPress={restartGame}>
+                  <Text style={styles.btnText}>다시 도전하기</Text>
+                </Pressable>
+              </View>
+            )}
+          </View>
+        </ImageBackground>
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -156,11 +159,15 @@ export default function App() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#0f3d2e',
+    backgroundColor: '#000',
   },
   root: {
     flex: 1,
     width: '100%',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
   },
   center: {
     flex: 1,
