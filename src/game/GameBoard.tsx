@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import {
   BALL_SIZE,
+  BALL_BASE_SPEED,
+  BALL_SPEED_INCREMENT,
   BUTTON_BG,
   CATCH_LINE,
   FIELD_GREEN,
@@ -86,7 +88,8 @@ export function GameBoard({ sessionKey, onGameOver }: Props) {
     const loop = () => {
       if (!runningRef.current || endedRef.current) return;
 
-      ballY.current += 5 + (GAME_DURATION_SEC - timeLeftRef.current) * 0.15;
+      const elapsedTime = GAME_DURATION_SEC - timeLeftRef.current;
+      ballY.current += BALL_BASE_SPEED + elapsedTime * BALL_SPEED_INCREMENT;
 
       if (
         ballY.current > CATCH_LINE &&

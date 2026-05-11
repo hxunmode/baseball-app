@@ -2,10 +2,10 @@ import { StatusBar } from 'expo-status-bar';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { BUTTON_BG } from './src/game/constants';
+import { BUTTON_BG, REWARD_SCORE_THRESHOLD } from './src/game/constants';
 import { GameBoard } from './src/game/GameBoard';
 
-type Screen = 'name' | 'game' | 'result' | 'reward' | 'sns';
+type Screen = 'name' | 'game' | 'reward' | 'retry';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('name');
@@ -24,7 +24,7 @@ export default function App() {
   const handleGameOver = useCallback(
     (score: number) => {
       setLastScore(score);
-      go('result');
+      go(score >= REWARD_SCORE_THRESHOLD ? 'reward' : 'retry');
     },
     [go],
   );
@@ -33,6 +33,11 @@ export default function App() {
     setNickname('');
     setLastScore(0);
     go('name');
+  }, [go]);
+
+  const restartGame = useCallback(() => {
+    setGameSession((k) => k + 1);
+    go('game');
   }, [go]);
 
   return (
@@ -63,33 +68,31 @@ export default function App() {
             <GameBoard sessionKey={gameSession} onGameOver={handleGameOver} />
           )}
 
-          {screen === 'result' && (
-            <View style={styles.center}>
-              <Text style={styles.resultText}>
-                {(nickname.trim() || '플레이어') + '님 ' + lastScore + '개 성공!'}
-              </Text>
-              <Pressable style={styles.btn} onPress={() => go('reward')}>
-                <Text style={styles.btnText}>리워드 받기</Text>
-              </Pressable>
-            </View>
-          )}
-
           {screen === 'reward' && (
             <View style={styles.center}>
               <Text style={styles.heading}>리워드 획득!</Text>
               <Text style={styles.emoji}>🎁</Text>
-              <Pressable style={styles.btn} onPress={() => go('sns')}>
-                <Text style={styles.btnText}>다음</Text>
+              <Text style={styles.resultText}>
+                {(nickname.trim() || '플레이어') + '님 ' + lastScore + '개 성공!'}
+              </Text>
+              <Text style={styles.sub}>{REWARD_SCORE_THRESHOLD}점 이상 달성에 성공했어요.</Text>
+              <Pressable style={styles.btn} onPress={resetFlow}>
+                <Text style={styles.btnText}>홈으로</Text>
               </Pressable>
             </View>
           )}
 
-          {screen === 'sns' && (
+          {screen === 'retry' && (
             <View style={styles.center}>
-              <Text style={styles.heading}>공유하기</Text>
-              <Text style={styles.sub}>스토어 배포 시 SNS 연동을 붙일 수 있어요.</Text>
-              <Pressable style={styles.btn} onPress={resetFlow}>
-                <Text style={styles.btnText}>처음으로</Text>
+              <Text style={styles.heading}>조금만 더!</Text>
+              <Text style={styles.resultText}>
+                {(nickname.trim() || '플레이어') + '님 ' + lastScore + '개 성공!'}
+              </Text>
+              <Text style={styles.sub}>
+                {REWARD_SCORE_THRESHOLD}점 이상 달성하면 리워드를 받을 수 있어요.
+              </Text>
+              <Pressable style={styles.btn} onPress={restartGame}>
+                <Text style={styles.btnText}>다시 도전하기</Text>
               </Pressable>
             </View>
           )}

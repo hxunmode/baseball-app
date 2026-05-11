@@ -6,12 +6,15 @@ export const BALL_SIZE = 40;
 export const GLOVE_W = 130;
 export const GLOVE_H = 78;
 export const GLOVE_Y = 512;
+export const BALL_BASE_SPEED = 5;
+export const BALL_SPEED_INCREMENT = 0.35;
 /** 원본: ballY > 520 */
 export const CATCH_LINE = 520;
 /** 원본: ballY > 600 */
 export const MISS_LINE = 600;
 
 export const GAME_DURATION_SEC = 45;
+export const REWARD_SCORE_THRESHOLD = 20;
 
 /** 원본 팀 버튼 순서 */
 export const KBO_TEAMS = [
