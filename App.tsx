@@ -41,7 +41,7 @@ const TEAM_SCHEDULE_IMAGES: Partial<Record<KboTeam, number>> = {
   키움: require('./assets/schedule/KIWOOM.png'),
   KIA: require('./assets/schedule/KIA.png'),
   KT: require('./assets/schedule/KT.png'),
-  롯데: require('./assets/schedule/LOTTE.jpg'),
+  롯데: require('./assets/schedule/LOTTE.png'),
   삼성: require('./assets/schedule/SAMSUNG.png'),
   한화: require('./assets/schedule/EAGLES.png'),
   NC: require('./assets/schedule/NC.png'),
@@ -204,7 +204,7 @@ export default function App() {
                     <Image
                       source={selectedScheduleImage}
                       style={styles.scheduleImage}
-                      resizeMode="contain"
+                      resizeMode="cover"
                     />
                   ) : (
                     <View style={styles.schedulePlaceholder}>
@@ -392,16 +392,17 @@ const styles = StyleSheet.create({
   scheduleCard: {
     width: '100%',
     maxWidth: 360,
+    aspectRatio: 1080 / 1350,
     backgroundColor: 'rgba(255,255,255,0.16)',
     borderRadius: 16,
-    padding: 12,
+    overflow: 'hidden',
     marginBottom: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   scheduleImage: {
     width: '100%',
-    aspectRatio: 1080 / 1350,
+    height: '100%',
   },
   schedulePlaceholder: {
     width: '100%',
