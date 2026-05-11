@@ -1,31 +1,15 @@
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useMemo, useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { useCallback, useState } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { BUTTON_BG, KBO_TEAMS, type KboTeam } from './src/game/constants';
+import { BUTTON_BG } from './src/game/constants';
 import { GameBoard } from './src/game/GameBoard';
 
-type Screen =
-  | 'login'
-  | 'name'
-  | 'team'
-  | 'start'
-  | 'game'
-  | 'result'
-  | 'reward'
-  | 'sns';
+type Screen = 'name' | 'game' | 'result' | 'reward' | 'sns';
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>('login');
+  const [screen, setScreen] = useState<Screen>('name');
   const [nickname, setNickname] = useState('');
-  const [team, setTeam] = useState<KboTeam | ''>('');
   const [lastScore, setLastScore] = useState(0);
   const [gameSession, setGameSession] = useState(0);
 
@@ -33,18 +17,6 @@ export default function App() {
 
   const saveName = useCallback(() => {
     setNickname((n) => (n.trim() ? n.trim() : '플레이어'));
-    go('team');
-  }, [go]);
-
-  const selectTeam = useCallback(
-    (t: KboTeam) => {
-      setTeam(t);
-      go('start');
-    },
-    [go],
-  );
-
-  const startGame = useCallback(() => {
     setGameSession((k) => k + 1);
     go('game');
   }, [go]);
@@ -59,41 +31,19 @@ export default function App() {
 
   const resetFlow = useCallback(() => {
     setNickname('');
-    setTeam('');
     setLastScore(0);
-    go('login');
+    go('name');
   }, [go]);
-
-  const teamRows = useMemo(() => {
-    const rows: KboTeam[][] = [
-      [KBO_TEAMS[0], KBO_TEAMS[1], KBO_TEAMS[2]],
-      [KBO_TEAMS[3], KBO_TEAMS[4], KBO_TEAMS[5]],
-      [KBO_TEAMS[6], KBO_TEAMS[7], KBO_TEAMS[8]],
-      [KBO_TEAMS[9]],
-    ];
-    return rows;
-  }, []);
 
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safe}>
         <StatusBar style="light" />
         <View style={styles.root}>
-          {screen === 'login' && (
-            <View style={styles.center}>
-              <Text style={styles.title}>Catch to Win</Text>
-              <Text style={styles.sub}>간편 시작 (데모)</Text>
-              <Pressable style={styles.oauth} onPress={() => go('name')}>
-                <Text style={styles.oauthText}>Google로 계속</Text>
-              </Pressable>
-              <Pressable style={styles.oauth} onPress={() => go('name')}>
-                <Text style={styles.oauthText}>Apple로 계속</Text>
-              </Pressable>
-            </View>
-          )}
-
           {screen === 'name' && (
             <View style={styles.center}>
+              <Text style={styles.title}>Catch to Win</Text>
+              <Text style={styles.sub}>닉네임만 입력하면 바로 시작합니다.</Text>
               <Text style={styles.heading}>닉네임 입력</Text>
               <TextInput
                 style={styles.input}
@@ -104,38 +54,6 @@ export default function App() {
                 maxLength={12}
               />
               <Pressable style={styles.btn} onPress={saveName}>
-                <Text style={styles.btnText}>확인</Text>
-              </Pressable>
-            </View>
-          )}
-
-          {screen === 'team' && (
-            <ScrollView
-              contentContainerStyle={styles.teamScroll}
-              keyboardShouldPersistTaps="handled"
-            >
-              <Text style={styles.heading}>응원 팀 선택</Text>
-              {teamRows.map((row, i) => (
-                <View key={i} style={styles.teamRow}>
-                  {row.map((t) => (
-                    <Pressable
-                      key={t}
-                      style={[styles.teamBtn, row.length === 1 && styles.teamBtnSingle]}
-                      onPress={() => selectTeam(t)}
-                    >
-                      <Text style={styles.teamBtnText}>{t}</Text>
-                    </Pressable>
-                  ))}
-                </View>
-              ))}
-            </ScrollView>
-          )}
-
-          {screen === 'start' && (
-            <View style={styles.center}>
-              <Text style={styles.heading}>START</Text>
-              <Text style={styles.teamPill}>{team}</Text>
-              <Pressable style={styles.btn} onPress={startGame}>
                 <Text style={styles.btnText}>게임 시작</Text>
               </Pressable>
             </View>
@@ -214,21 +132,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: 20,
   },
-  oauth: {
-    width: '100%',
-    maxWidth: 280,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 30,
-    backgroundColor: '#fff',
-    marginBottom: 12,
-    alignItems: 'center',
-  },
-  oauthText: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#333',
-  },
   input: {
     width: '100%',
     maxWidth: 280,
@@ -250,40 +153,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#fff',
-  },
-  teamScroll: {
-    paddingVertical: 32,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
-  teamRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 10,
-  },
-  teamBtn: {
-    minWidth: 92,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    borderRadius: 30,
-    backgroundColor: BUTTON_BG,
-  },
-  teamBtnSingle: {
-    minWidth: 120,
-  },
-  teamBtnText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  teamPill: {
-    color: 'rgba(255,255,255,0.9)',
-    fontSize: 16,
-    marginBottom: 24,
-    fontWeight: '600',
   },
   resultText: {
     fontSize: 22,
