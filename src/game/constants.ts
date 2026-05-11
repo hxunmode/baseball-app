@@ -3,9 +3,9 @@ export const LOGICAL_W = 400;
 export const LOGICAL_H = 600;
 
 export const BALL_SIZE = 40;
-export const GLOVE_W = 100;
-export const GLOVE_H = 60;
-export const GLOVE_Y = 530;
+export const GLOVE_W = 130;
+export const GLOVE_H = 78;
+export const GLOVE_Y = 512;
 /** 원본: ballY > 520 */
 export const CATCH_LINE = 520;
 /** 원본: ballY > 600 */

@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import {
+  Image,
+  PanResponder,
   Pressable,
   StyleSheet,
   Text,
@@ -20,6 +22,9 @@ import {
   LOGICAL_W,
   MISS_LINE,
 } from './constants';
+
+const BALL_IMAGE = require('../../assets/ball.png');
+const GLOVE_IMAGE = require('../../assets/glove.png');
 
 type Props = {
   /** 부모에서 게임 재시작할 때마다 증가 */
@@ -122,21 +127,33 @@ export function GameBoard({ sessionKey, onGameOver }: Props) {
     [scale],
   );
 
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onStartShouldSetPanResponderCapture: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponderCapture: () => true,
+        onPanResponderGrant: (event) => {
+          onTouch(event.nativeEvent.locationX);
+        },
+        onPanResponderMove: (event) => {
+          onTouch(event.nativeEvent.locationX);
+        },
+      }),
+    [onTouch],
+  );
+
   return (
     <View style={styles.outer}>
-      <View
-        style={[styles.board, { width: boardW, height: boardH }]}
-        onStartShouldSetResponder={() => true}
-        onMoveShouldSetResponder={() => true}
-        onResponderGrant={(e) => onTouch(e.nativeEvent.locationX)}
-        onResponderMove={(e) => onTouch(e.nativeEvent.locationX)}
-      >
-        <View style={[styles.skyStrip, { height: 120 * scale }]} />
-        <View style={styles.field} />
+      <View style={[styles.board, { width: boardW, height: boardH }]} {...panResponder.panHandlers}>
+        <View pointerEvents="none" style={[styles.skyStrip, { height: 120 * scale }]} />
+        <View pointerEvents="none" style={styles.field} />
 
-        <View
+        <Image
+          source={BALL_IMAGE}
           style={[
-            styles.ball,
+            styles.sprite,
             {
               width: BALL_SIZE * scale,
               height: BALL_SIZE * scale,
@@ -144,10 +161,12 @@ export function GameBoard({ sessionKey, onGameOver }: Props) {
               top: ballY.current * scale,
             },
           ]}
+          resizeMode="contain"
         />
-        <View
+        <Image
+          source={GLOVE_IMAGE}
           style={[
-            styles.glove,
+            styles.sprite,
             {
               width: GLOVE_W * scale,
               height: GLOVE_H * scale,
@@ -155,12 +174,17 @@ export function GameBoard({ sessionKey, onGameOver }: Props) {
               top: GLOVE_Y * scale,
             },
           ]}
+          resizeMode="contain"
         />
 
-        <Text style={[styles.hud, { fontSize: 14 * scale, left: 10 * scale, top: 8 * scale }]}>
+        <Text
+          pointerEvents="none"
+          style={[styles.hud, { fontSize: 14 * scale, left: 10 * scale, top: 8 * scale }]}
+        >
           Score:{scoreRef.current}
         </Text>
         <Text
+          pointerEvents="none"
           style={[
             styles.hud,
             {
@@ -173,7 +197,7 @@ export function GameBoard({ sessionKey, onGameOver }: Props) {
           Time:{timeLeftRef.current}
         </Text>
 
-        <Text style={[styles.hint, { fontSize: 11 * scale, bottom: 6 * scale }]}>
+        <Text pointerEvents="none" style={[styles.hint, { fontSize: 11 * scale, bottom: 6 * scale }]}>
           손가락으로 좌우 이동
         </Text>
       </View>
@@ -210,19 +234,8 @@ const styles = StyleSheet.create({
     top: 120,
     backgroundColor: FIELD_LIGHT,
   },
-  ball: {
+  sprite: {
     position: 'absolute',
-    borderRadius: 999,
-    backgroundColor: '#f4f1de',
-    borderWidth: 2,
-    borderColor: '#c1121f',
-  },
-  glove: {
-    position: 'absolute',
-    backgroundColor: '#8B4513',
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#5c3317',
   },
   hud: {
     position: 'absolute',
