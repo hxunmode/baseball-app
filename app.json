@@ -20,6 +20,10 @@
       "bundleIdentifier": "com.catchtowin.app"
     },
     "android": {
+      "permissions": [
+        "WRITE_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ],
       "blockedPermissions": [
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VIDEO",
