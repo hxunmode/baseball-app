@@ -191,7 +191,10 @@ export default function App() {
 
     const fileInfo = await FileSystem.getInfoAsync(fileUri);
     if (!fileInfo.exists) {
-      Alert.alert("오류", "이미지 파일을 찾을 수 없습니다. 다시 시도해 주세요.");
+      Alert.alert(
+        "오류",
+        "이미지 파일을 찾을 수 없습니다. 다시 시도해 주세요.",
+      );
       return;
     }
 
@@ -300,9 +303,7 @@ export default function App() {
             {screen === "team" && (
               <View style={styles.center}>
                 <Text style={styles.heading}>응원 팀 선택</Text>
-                <Text style={styles.sub}>
-                  응원하는 팀을 고르면 다음 화면으로 이동합니다.
-                </Text>
+                <Text style={styles.sub}>응원하는 팀을 선택하세요.</Text>
                 <View style={styles.teamGrid}>
                   {TEAM_OPTIONS.map((option) => (
                     <Pressable
