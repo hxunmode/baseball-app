@@ -2,6 +2,7 @@ import { Asset } from "expo-asset";
 import * as FileSystem from "expo-file-system/legacy";
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
+import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useState } from "react";
 import {
@@ -23,6 +24,7 @@ import {
   type KboTeam,
 } from "./src/game/constants";
 import { GameBoard } from "./src/game/GameBoard";
+import { FONT_FAMILY, fontAssets } from "./src/theme/fonts";
 
 type Screen =
   | "name"
@@ -129,6 +131,7 @@ const TEAM_SCHEDULE_IMAGES: Partial<Record<KboTeam, number>> = {
 };
 
 export default function App() {
+  const [fontsLoaded] = useFonts(fontAssets);
   const [screen, setScreen] = useState<Screen>("name");
   const [nickname, setNickname] = useState("");
   const [team, setTeam] = useState<KboTeam | null>(null);
@@ -278,6 +281,10 @@ export default function App() {
         resetFlow();
     }
   }, [go, resetFlow, screen]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <SafeAreaProvider>
@@ -506,6 +513,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.2)",
   },
   backButtonText: {
+    fontFamily: FONT_FAMILY,
     color: "#fff",
     fontSize: 14,
     fontWeight: "700",
@@ -521,6 +529,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.42)",
   },
   title: {
+    fontFamily: FONT_FAMILY,
     fontSize: 28,
     fontWeight: "800",
     color: "#fff",
@@ -539,18 +548,21 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   sub: {
+    fontFamily: FONT_FAMILY,
     fontSize: 14,
     color: "rgba(255,255,255,0.75)",
     marginBottom: 28,
     textAlign: "center",
   },
   heading: {
+    fontFamily: FONT_FAMILY,
     fontSize: 22,
     fontWeight: "700",
     color: "#fff",
     marginBottom: 20,
   },
   input: {
+    fontFamily: FONT_FAMILY,
     width: "100%",
     maxWidth: 280,
     paddingVertical: 14,
@@ -569,6 +581,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   btnText: {
+    fontFamily: FONT_FAMILY,
     fontSize: 18,
     fontWeight: "600",
     color: "#fff",
@@ -598,12 +611,14 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   teamLabel: {
+    fontFamily: FONT_FAMILY,
     color: "#fff",
     fontSize: 12,
     fontWeight: "600",
     textAlign: "center",
   },
   resultText: {
+    fontFamily: FONT_FAMILY,
     fontSize: 22,
     fontWeight: "700",
     color: "#fff",
@@ -633,6 +648,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   schedulePlaceholderTitle: {
+    fontFamily: FONT_FAMILY,
     color: "#fff",
     fontSize: 20,
     fontWeight: "700",
@@ -640,6 +656,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   schedulePlaceholderText: {
+    fontFamily: FONT_FAMILY,
     color: "rgba(255,255,255,0.8)",
     fontSize: 14,
     textAlign: "center",
@@ -653,6 +670,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   rewardResultText: {
+    fontFamily: FONT_FAMILY,
     fontSize: 22,
     fontWeight: "700",
     color: "#fff",
@@ -660,6 +678,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   rewardSub: {
+    fontFamily: FONT_FAMILY,
     fontSize: 14,
     color: "rgba(255,255,255,0.75)",
     marginBottom: 16,

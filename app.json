@@ -47,6 +47,12 @@
           "savePhotosPermission": "리워드 이미지를 사진 앨범에 저장하기 위해 접근 권한이 필요합니다.",
           "granularPermissions": []
         }
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": ["./assets/font/AppleSDGothicNeoEB.ttf"]
+        }
       ]
     ],
     "extra": {
