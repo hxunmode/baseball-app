@@ -1,7 +1,3 @@
-import { Asset } from "expo-asset";
-import * as FileSystem from "expo-file-system/legacy";
-import * as MediaLibrary from "expo-media-library";
-import * as Sharing from "expo-sharing";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useState } from "react";
@@ -9,7 +5,6 @@ import {
   Alert,
   Image,
   ImageBackground,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -25,6 +20,10 @@ import {
   type KboTeam,
 } from "./src/game/constants";
 import { GameBoard } from "./src/game/GameBoard";
+import {
+  isShareCancelled,
+  saveRewardImage,
+} from "./src/reward/saveRewardImage";
 import { FONT_FAMILY, fontAssets } from "./src/theme/fonts";
 
 type Screen =
@@ -54,69 +53,6 @@ const REWARD_IMAGE = require("./assets/reward.png");
 const REWARD_IMAGE_WIDTH = 216;
 const REWARD_IMAGE_HEIGHT = 270;
 const REWARD_IMAGE_ASPECT_RATIO = REWARD_IMAGE_WIDTH / REWARD_IMAGE_HEIGHT;
-
-function isSavableFileUri(uri: string): boolean {
-  return (
-    uri.startsWith("file://") ||
-    (uri.startsWith("/") && !uri.includes("android_res"))
-  );
-}
-
-async function resolveRewardFileUri(): Promise<string> {
-  const baseDir = FileSystem.documentDirectory ?? FileSystem.cacheDirectory;
-  if (!baseDir) {
-    throw new Error("CACHE_UNAVAILABLE");
-  }
-
-  const dest = `${baseDir}reward.png`;
-  const existing = await FileSystem.getInfoAsync(dest);
-  if (existing.exists) {
-    await FileSystem.deleteAsync(dest, { idempotent: true });
-  }
-
-  try {
-    const [asset] = await Asset.loadAsync(REWARD_IMAGE);
-    const localUri = asset.localUri;
-    if (localUri && isSavableFileUri(localUri)) {
-      if (localUri === dest) {
-        return dest;
-      }
-      try {
-        await FileSystem.copyAsync({ from: localUri, to: dest });
-        return dest;
-      } catch {
-        return localUri;
-      }
-    }
-  } catch {
-    // Expo Go / Android에서 drawable URI만 있는 경우 아래로 폴백
-  }
-
-  const source = Image.resolveAssetSource(REWARD_IMAGE);
-  if (source.uri.startsWith("http://") || source.uri.startsWith("https://")) {
-    const { uri } = await FileSystem.downloadAsync(source.uri, dest);
-    return uri;
-  }
-
-  throw new Error("REWARD_URI_UNAVAILABLE");
-}
-
-async function getAndroidContentUri(fileUri: string): Promise<string> {
-  if (Platform.OS !== "android") {
-    return fileUri;
-  }
-  return FileSystem.getContentUriAsync(fileUri);
-}
-
-function isShareCancelled(error: unknown): boolean {
-  const message =
-    error instanceof Error
-      ? error.message
-      : typeof error === "string"
-        ? error
-        : "";
-  return /cancel|dismiss|did not share|User canceled/i.test(message);
-}
 
 const TEAM_SCHEDULE_IMAGES: Partial<Record<KboTeam, number>> = {
   LG: require("./assets/schedule/LG.png"),
@@ -184,78 +120,53 @@ export default function App() {
     go("game");
   }, [go]);
 
-  const downloadRewardImage = useCallback(async () => {
-    let fileUri: string;
+  const runRewardShare = useCallback(async () => {
     try {
-      fileUri = await resolveRewardFileUri();
-    } catch {
-      Alert.alert("오류", "이미지를 불러오지 못했습니다. 다시 시도해 주세요.");
-      return;
-    }
-
-    const fileInfo = await FileSystem.getInfoAsync(fileUri);
-    if (!fileInfo.exists) {
-      Alert.alert(
-        "오류",
-        "이미지 파일을 찾을 수 없습니다. 다시 시도해 주세요.",
-      );
-      return;
-    }
-
-    if (Platform.OS === "android") {
-      try {
-        if (await Sharing.isAvailableAsync()) {
-          const shareUri = await getAndroidContentUri(fileUri);
-          await Sharing.shareAsync(shareUri, {
-            mimeType: "image/png",
-            dialogTitle: "리워드 이미지 저장",
-          });
-          return;
-        }
-      } catch (error) {
-        if (isShareCancelled(error)) {
-          return;
-        }
-      }
-
-      Alert.alert(
-        "저장 안내",
-        "공유 메뉴에서 「갤러리」, 「다운로드」 또는 「파일에 저장」을 선택해 이미지를 저장해 주세요.",
-      );
-      return;
-    }
-
-    try {
-      const permission = await MediaLibrary.requestPermissionsAsync(true);
-      if (permission.granted) {
-        await MediaLibrary.createAssetAsync(fileUri);
-        Alert.alert("저장 완료", "리워드 이미지가 사진 앨범에 저장되었습니다.");
-        return;
-      }
-    } catch {
-      // iOS 갤러리 저장 실패 시 공유 메뉴로 대체
-    }
-
-    try {
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileUri, {
-          mimeType: "image/png",
-          dialogTitle: "리워드 이미지 저장",
-          UTI: "public.png",
-        });
-        return;
-      }
+      await saveRewardImage(REWARD_IMAGE, "share");
     } catch (error) {
       if (isShareCancelled(error)) {
         return;
       }
+      Alert.alert(
+        "저장 안내",
+        "공유 메뉴를 열지 못했습니다. 「다른 앱으로 공유」를 선택해 갤러리·파일·드라이브 등으로 저장해 주세요.",
+      );
     }
-
-    Alert.alert(
-      "저장 안내",
-      "사진 앨범 권한이 없어 저장하지 못했습니다. 설정에서 권한을 허용한 뒤 다시 시도해 주세요.",
-    );
   }, []);
+
+  const runRewardGallerySave = useCallback(async () => {
+    try {
+      await saveRewardImage(REWARD_IMAGE, "gallery");
+      Alert.alert("저장 완료", "리워드 이미지가 사진 앨범에 저장되었습니다.");
+    } catch (error) {
+      if (isShareCancelled(error)) {
+        return;
+      }
+      Alert.alert(
+        "사진 앨범 저장 실패",
+        "공유 메뉴에서 갤러리·파일·다운로드 앱을 선택해 저장할 수 있습니다.",
+        [
+          { text: "공유하기", onPress: () => void runRewardShare() },
+          { text: "닫기", style: "cancel" },
+        ],
+      );
+    }
+  }, [runRewardShare]);
+
+  const downloadRewardImage = useCallback(() => {
+    Alert.alert(
+      "리워드 저장",
+      "사진 저장 또는 공유하기를 통해 리워드를 다운로드 받으세요",
+      [
+        { text: "공유하기", onPress: () => void runRewardShare() },
+        {
+          text: "사진 저장",
+          onPress: () => void runRewardGallerySave(),
+        },
+        { text: "취소", style: "cancel" },
+      ],
+    );
+  }, [runRewardGallerySave, runRewardShare]);
 
   const selectedScheduleImage = team ? TEAM_SCHEDULE_IMAGES[team] : undefined;
 
