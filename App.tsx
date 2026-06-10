@@ -20,6 +20,7 @@ import {
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import {
   BUTTON_BG,
+  BUTTON_TEXT,
   REWARD_SCORE_THRESHOLD,
   type KboTeam,
 } from "./src/game/constants";
@@ -584,7 +585,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY,
     fontSize: 18,
     fontWeight: "600",
-    color: "#fff",
+    color: BUTTON_TEXT,
   },
   teamGrid: {
     width: "100%",

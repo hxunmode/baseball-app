@@ -21,6 +21,7 @@ import {
   BALL_BASE_SPEED,
   BALL_SPEED_INCREMENT,
   BUTTON_BG,
+  BUTTON_TEXT,
   CATCH_LINE,
   FIELD_GREEN,
   FIELD_LIGHT,
@@ -404,7 +405,7 @@ const styles = StyleSheet.create({
   },
   abortText: {
     fontFamily: FONT_FAMILY,
-    color: '#fff',
+    color: BUTTON_TEXT,
     fontWeight: '600',
   },
 });

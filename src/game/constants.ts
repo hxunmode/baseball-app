@@ -34,4 +34,5 @@ export type KboTeam = (typeof KBO_TEAMS)[number];
 
 export const FIELD_GREEN = '#1b4332';
 export const FIELD_LIGHT = '#2d6a4f';
-export const BUTTON_BG = '#8B2E2E';
+export const BUTTON_BG = '#FCFFF2';
+export const BUTTON_TEXT = '#333333';
