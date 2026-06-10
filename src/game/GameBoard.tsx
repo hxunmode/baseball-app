@@ -1,5 +1,13 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import {
+  Animated,
   Image,
   PanResponder,
   Pressable,
@@ -29,9 +37,19 @@ const BALL_IMAGE = require('../../assets/ball.png');
 const GLOVE_IMAGE = require('../../assets/glove.png');
 
 type Props = {
-  /** 부모에서 게임 재시작할 때마다 증가 */
   sessionKey: number;
   onGameOver: (score: number) => void;
+};
+
+type ArenaProps = {
+  sessionKey: number;
+  scale: number;
+  boardW: number;
+  boardH: number;
+  onScoreChange: (score: number) => void;
+  onTimeChange: (timeLeft: number) => void;
+  onGameOver: (score: number) => void;
+  onReady: (endGame: () => void) => void;
 };
 
 function resetBall(ballX: { current: number }, ballY: { current: number }) {
@@ -39,13 +57,20 @@ function resetBall(ballX: { current: number }, ballY: { current: number }) {
   ballY.current = 0;
 }
 
-export function GameBoard({ sessionKey, onGameOver }: Props) {
-  const { width: windowWidth } = useWindowDimensions();
-  const margin = 24;
-  const boardW = Math.min(LOGICAL_W, windowWidth - margin * 2);
-  const scale = boardW / LOGICAL_W;
-  const boardH = LOGICAL_H * scale;
+function clampGloveX(logicalX: number) {
+  return Math.max(0, Math.min(LOGICAL_W - GLOVE_W, logicalX - 40));
+}
 
+const GameArena = memo(function GameArena({
+  sessionKey,
+  scale,
+  boardW,
+  boardH,
+  onScoreChange,
+  onTimeChange,
+  onGameOver,
+  onReady,
+}: ArenaProps) {
   const gloveX = useRef(170);
   const ballX = useRef(200);
   const ballY = useRef(0);
@@ -54,7 +79,19 @@ export function GameBoard({ sessionKey, onGameOver }: Props) {
   const runningRef = useRef(false);
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [, tick] = useReducer((n) => n + 1, 0);
+  const scaleRef = useRef(scale);
+  const boardLeftRef = useRef(0);
+
+  const ballXAnim = useRef(new Animated.Value(200 * scale)).current;
+  const ballYAnim = useRef(new Animated.Value(0)).current;
+  const gloveXAnim = useRef(new Animated.Value(170 * scale)).current;
+
+  useEffect(() => {
+    scaleRef.current = scale;
+    ballXAnim.setValue(ballX.current * scale);
+    ballYAnim.setValue(ballY.current * scale);
+    gloveXAnim.setValue(gloveX.current * scale);
+  }, [scale, ballXAnim, ballYAnim, gloveXAnim]);
 
   const endGame = useCallback(() => {
     if (endedRef.current) return;
@@ -68,17 +105,37 @@ export function GameBoard({ sessionKey, onGameOver }: Props) {
   }, [onGameOver]);
 
   useEffect(() => {
+    onReady(endGame);
+  }, [endGame, onReady]);
+
+  const moveGloveToPageX = useCallback(
+    (pageX: number) => {
+      const boardX = pageX - boardLeftRef.current;
+      const logicalX = boardX / scaleRef.current;
+      gloveX.current = clampGloveX(logicalX);
+      gloveXAnim.setValue(gloveX.current * scaleRef.current);
+    },
+    [gloveXAnim],
+  );
+
+  useEffect(() => {
     endedRef.current = false;
     runningRef.current = true;
     gloveX.current = 170;
     scoreRef.current = 0;
     timeLeftRef.current = GAME_DURATION_SEC;
     resetBall(ballX, ballY);
+    onScoreChange(0);
+    onTimeChange(GAME_DURATION_SEC);
+
+    ballXAnim.setValue(ballX.current * scaleRef.current);
+    ballYAnim.setValue(ballY.current * scaleRef.current);
+    gloveXAnim.setValue(gloveX.current * scaleRef.current);
 
     timerRef.current = setInterval(() => {
       if (!runningRef.current || endedRef.current) return;
       timeLeftRef.current -= 1;
-      tick();
+      onTimeChange(timeLeftRef.current);
       if (timeLeftRef.current <= 0) {
         endGame();
       }
@@ -97,12 +154,15 @@ export function GameBoard({ sessionKey, onGameOver }: Props) {
         ballX.current < gloveX.current + GLOVE_W
       ) {
         scoreRef.current += 1;
+        onScoreChange(scoreRef.current);
         resetBall(ballX, ballY);
       } else if (ballY.current > MISS_LINE) {
         resetBall(ballX, ballY);
       }
 
-      tick();
+      ballXAnim.setValue(ballX.current * scaleRef.current);
+      ballYAnim.setValue(ballY.current * scaleRef.current);
+
       raf = requestAnimationFrame(loop);
     };
 
@@ -116,97 +176,164 @@ export function GameBoard({ sessionKey, onGameOver }: Props) {
       }
       cancelAnimationFrame(raf);
     };
-  }, [sessionKey, endGame]);
+  }, [
+    sessionKey,
+    endGame,
+    ballXAnim,
+    ballYAnim,
+    gloveXAnim,
+    onScoreChange,
+    onTimeChange,
+  ]);
 
-  const onTouch = useCallback(
-    (locationX: number) => {
-      const logicalX = locationX / scale;
-      gloveX.current = Math.max(
-        0,
-        Math.min(LOGICAL_W - GLOVE_W, logicalX - 40),
-      );
-      tick();
-    },
-    [scale],
-  );
+  const boardRef = useRef<View>(null);
+
+  const handleBoardLayout = useCallback(() => {
+    boardRef.current?.measureInWindow((x) => {
+      boardLeftRef.current = x;
+    });
+  }, []);
 
   const panResponder = useMemo(
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
-        onStartShouldSetPanResponderCapture: () => true,
         onMoveShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponderCapture: () => true,
         onPanResponderGrant: (event) => {
-          onTouch(event.nativeEvent.locationX);
+          moveGloveToPageX(event.nativeEvent.pageX);
         },
         onPanResponderMove: (event) => {
-          onTouch(event.nativeEvent.locationX);
+          moveGloveToPageX(event.nativeEvent.pageX);
         },
       }),
-    [onTouch],
+    [moveGloveToPageX],
   );
 
   return (
+    <View
+      ref={boardRef}
+      onLayout={handleBoardLayout}
+      style={[styles.board, { width: boardW, height: boardH }]}
+    >
+      <View pointerEvents="none" style={styles.baseTint} />
+      <View pointerEvents="none" style={[styles.skyStrip, { height: 120 * scale }]} />
+      <View pointerEvents="none" style={styles.field} />
+
+      <Animated.Image
+        source={BALL_IMAGE}
+        style={[
+          styles.sprite,
+          {
+            width: BALL_SIZE * scale,
+            height: BALL_SIZE * scale,
+            transform: [
+              { translateX: ballXAnim },
+              { translateY: ballYAnim },
+            ],
+          },
+        ]}
+        resizeMode="contain"
+      />
+      <Animated.Image
+        source={GLOVE_IMAGE}
+        style={[
+          styles.sprite,
+          {
+            width: GLOVE_W * scale,
+            height: GLOVE_H * scale,
+            transform: [
+              { translateX: gloveXAnim },
+              { translateY: GLOVE_Y * scale },
+            ],
+          },
+        ]}
+        resizeMode="contain"
+      />
+
+      <View
+        style={styles.touchLayer}
+        collapsable={false}
+        {...panResponder.panHandlers}
+      />
+    </View>
+  );
+});
+
+type HudProps = {
+  score: number;
+  timeLeft: number;
+  scale: number;
+};
+
+const GameHud = memo(function GameHud({ score, timeLeft, scale }: HudProps) {
+  return (
+    <>
+      <Text
+        pointerEvents="none"
+        style={[styles.hud, { fontSize: 14 * scale, left: 10 * scale, top: 8 * scale }]}
+      >
+        Score:{score}
+      </Text>
+      <Text
+        pointerEvents="none"
+        style={[
+          styles.hud,
+          {
+            fontSize: 14 * scale,
+            right: 10 * scale,
+            top: 8 * scale,
+          },
+        ]}
+      >
+        Time:{timeLeft}
+      </Text>
+      <Text pointerEvents="none" style={[styles.hint, { fontSize: 11 * scale, bottom: 6 * scale }]}>
+        손가락으로 좌우 이동
+      </Text>
+    </>
+  );
+});
+
+export function GameBoard({ sessionKey, onGameOver }: Props) {
+  const { width: windowWidth } = useWindowDimensions();
+  const margin = 24;
+  const boardW = Math.min(LOGICAL_W, windowWidth - margin * 2);
+  const scale = boardW / LOGICAL_W;
+  const boardH = LOGICAL_H * scale;
+
+  const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(GAME_DURATION_SEC);
+  const endGameRef = useRef<() => void>(() => {});
+
+  const onScoreChange = useCallback((nextScore: number) => {
+    setScore(nextScore);
+  }, []);
+
+  const onTimeChange = useCallback((nextTime: number) => {
+    setTimeLeft(nextTime);
+  }, []);
+
+  const onReady = useCallback((endGame: () => void) => {
+    endGameRef.current = endGame;
+  }, []);
+
+  return (
     <View style={styles.outer}>
-      <View style={[styles.board, { width: boardW, height: boardH }]} {...panResponder.panHandlers}>
-        <View pointerEvents="none" style={styles.baseTint} />
-        <View pointerEvents="none" style={[styles.skyStrip, { height: 120 * scale }]} />
-        <View pointerEvents="none" style={styles.field} />
-
-        <Image
-          source={BALL_IMAGE}
-          style={[
-            styles.sprite,
-            {
-              width: BALL_SIZE * scale,
-              height: BALL_SIZE * scale,
-              left: ballX.current * scale,
-              top: ballY.current * scale,
-            },
-          ]}
-          resizeMode="contain"
+      <View style={{ width: boardW, height: boardH, position: 'relative' }}>
+        <GameArena
+          sessionKey={sessionKey}
+          scale={scale}
+          boardW={boardW}
+          boardH={boardH}
+          onScoreChange={onScoreChange}
+          onTimeChange={onTimeChange}
+          onGameOver={onGameOver}
+          onReady={onReady}
         />
-        <Image
-          source={GLOVE_IMAGE}
-          style={[
-            styles.sprite,
-            {
-              width: GLOVE_W * scale,
-              height: GLOVE_H * scale,
-              left: gloveX.current * scale,
-              top: GLOVE_Y * scale,
-            },
-          ]}
-          resizeMode="contain"
-        />
-
-        <Text
-          pointerEvents="none"
-          style={[styles.hud, { fontSize: 14 * scale, left: 10 * scale, top: 8 * scale }]}
-        >
-          Score:{scoreRef.current}
-        </Text>
-        <Text
-          pointerEvents="none"
-          style={[
-            styles.hud,
-            {
-              fontSize: 14 * scale,
-              right: 10 * scale,
-              top: 8 * scale,
-            },
-          ]}
-        >
-          Time:{timeLeftRef.current}
-        </Text>
-
-        <Text pointerEvents="none" style={[styles.hint, { fontSize: 11 * scale, bottom: 6 * scale }]}>
-          손가락으로 좌우 이동
-        </Text>
+        <GameHud score={score} timeLeft={timeLeft} scale={scale} />
       </View>
 
-      <Pressable style={styles.abort} onPress={endGame}>
+      <Pressable style={styles.abort} onPress={() => endGameRef.current()}>
         <Text style={styles.abortText}>종료</Text>
       </Pressable>
     </View>
@@ -224,6 +351,10 @@ const styles = StyleSheet.create({
     position: 'relative',
     borderRadius: 8,
     overflow: 'hidden',
+  },
+  touchLayer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 10,
   },
   baseTint: {
     ...StyleSheet.absoluteFillObject,
@@ -245,6 +376,8 @@ const styles = StyleSheet.create({
   },
   sprite: {
     position: 'absolute',
+    left: 0,
+    top: 0,
   },
   hud: {
     position: 'absolute',
