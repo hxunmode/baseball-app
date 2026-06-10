@@ -33,7 +33,7 @@ import {
   LOGICAL_W,
   MISS_LINE,
 } from './constants';
-import { FONT_FAMILY } from '../theme/fonts';
+import { appFont } from '../theme/fonts';
 
 const BALL_IMAGE = require('../../assets/ball.png');
 const GLOVE_IMAGE = require('../../assets/glove.png');
@@ -382,16 +382,15 @@ const styles = StyleSheet.create({
     top: 0,
   },
   hud: {
-    fontFamily: FONT_FAMILY,
+    ...appFont,
     position: 'absolute',
     color: '#fff',
-    fontWeight: '700',
     textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
   hint: {
-    fontFamily: FONT_FAMILY,
+    ...appFont,
     position: 'absolute',
     alignSelf: 'center',
     color: 'rgba(255,255,255,0.85)',
@@ -404,8 +403,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
   },
   abortText: {
-    fontFamily: FONT_FAMILY,
+    ...appFont,
     color: BUTTON_TEXT,
-    fontWeight: '600',
   },
 });

@@ -24,7 +24,7 @@ import {
   isShareCancelled,
   saveRewardImage,
 } from "./src/reward/saveRewardImage";
-import { FONT_FAMILY, fontAssets } from "./src/theme/fonts";
+import { appFont, fontAssets } from "./src/theme/fonts";
 
 type Screen =
   | "name"
@@ -425,10 +425,9 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.2)",
   },
   backButtonText: {
-    fontFamily: FONT_FAMILY,
+    ...appFont,
     color: "#fff",
     fontSize: 14,
-    fontWeight: "700",
   },
   center: {
     flex: 1,
@@ -441,9 +440,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.42)",
   },
   title: {
-    fontFamily: FONT_FAMILY,
+    ...appFont,
     fontSize: 28,
-    fontWeight: "800",
     color: "#fff",
     marginBottom: 8,
   },
@@ -460,21 +458,20 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   sub: {
-    fontFamily: FONT_FAMILY,
+    ...appFont,
     fontSize: 14,
     color: "rgba(255,255,255,0.75)",
     marginBottom: 28,
     textAlign: "center",
   },
   heading: {
-    fontFamily: FONT_FAMILY,
+    ...appFont,
     fontSize: 22,
-    fontWeight: "700",
     color: "#fff",
     marginBottom: 20,
   },
   input: {
-    fontFamily: FONT_FAMILY,
+    ...appFont,
     width: "100%",
     maxWidth: 280,
     paddingVertical: 14,
@@ -493,9 +490,8 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   btnText: {
-    fontFamily: FONT_FAMILY,
+    ...appFont,
     fontSize: 18,
-    fontWeight: "600",
     color: BUTTON_TEXT,
   },
   teamGrid: {
@@ -523,16 +519,14 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   teamLabel: {
-    fontFamily: FONT_FAMILY,
+    ...appFont,
     color: "#fff",
     fontSize: 12,
-    fontWeight: "600",
     textAlign: "center",
   },
   resultText: {
-    fontFamily: FONT_FAMILY,
+    ...appFont,
     fontSize: 22,
-    fontWeight: "700",
     color: "#fff",
     textAlign: "center",
     marginBottom: 28,
@@ -560,15 +554,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   schedulePlaceholderTitle: {
-    fontFamily: FONT_FAMILY,
+    ...appFont,
     color: "#fff",
     fontSize: 20,
-    fontWeight: "700",
     textAlign: "center",
     marginBottom: 10,
   },
   schedulePlaceholderText: {
-    fontFamily: FONT_FAMILY,
+    ...appFont,
     color: "rgba(255,255,255,0.8)",
     fontSize: 14,
     textAlign: "center",
@@ -582,15 +575,14 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   rewardResultText: {
-    fontFamily: FONT_FAMILY,
+    ...appFont,
     fontSize: 22,
-    fontWeight: "700",
     color: "#fff",
     textAlign: "center",
     marginBottom: 12,
   },
   rewardSub: {
-    fontFamily: FONT_FAMILY,
+    ...appFont,
     fontSize: 14,
     color: "rgba(255,255,255,0.75)",
     marginBottom: 16,
