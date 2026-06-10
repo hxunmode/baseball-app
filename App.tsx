@@ -198,25 +198,46 @@ export default function App() {
       return;
     }
 
-    let permissionGranted = false;
+    if (Platform.OS === "android") {
+      try {
+        if (await Sharing.isAvailableAsync()) {
+          const shareUri = await getAndroidContentUri(fileUri);
+          await Sharing.shareAsync(shareUri, {
+            mimeType: "image/png",
+            dialogTitle: "리워드 이미지 저장",
+          });
+          return;
+        }
+      } catch (error) {
+        if (isShareCancelled(error)) {
+          return;
+        }
+      }
+
+      Alert.alert(
+        "저장 안내",
+        "공유 메뉴에서 「갤러리」, 「다운로드」 또는 「파일에 저장」을 선택해 이미지를 저장해 주세요.",
+      );
+      return;
+    }
+
     try {
       const permission = await MediaLibrary.requestPermissionsAsync(true);
-      permissionGranted = permission.granted;
-      if (permissionGranted) {
+      if (permission.granted) {
         await MediaLibrary.createAssetAsync(fileUri);
         Alert.alert("저장 완료", "리워드 이미지가 사진 앨범에 저장되었습니다.");
         return;
       }
     } catch {
-      // 갤러리 저장 실패 시 공유 메뉴로 대체
+      // iOS 갤러리 저장 실패 시 공유 메뉴로 대체
     }
 
     try {
       if (await Sharing.isAvailableAsync()) {
-        const shareUri = await getAndroidContentUri(fileUri);
-        await Sharing.shareAsync(shareUri, {
+        await Sharing.shareAsync(fileUri, {
           mimeType: "image/png",
           dialogTitle: "리워드 이미지 저장",
+          UTI: "public.png",
         });
         return;
       }
@@ -227,10 +248,8 @@ export default function App() {
     }
 
     Alert.alert(
-      permissionGranted ? "저장 실패" : "저장 안내",
-      permissionGranted
-        ? "갤러리에 저장하지 못했습니다. 공유 메뉴에서 「다운로드」 또는 「파일에 저장」을 선택해 주세요."
-        : "사진 앨범 권한이 없어 공유 메뉴를 열지 못했습니다. 설정에서 권한을 허용한 뒤 다시 시도해 주세요.",
+      "저장 안내",
+      "사진 앨범 권한이 없어 저장하지 못했습니다. 설정에서 권한을 허용한 뒤 다시 시도해 주세요.",
     );
   }, []);
 
