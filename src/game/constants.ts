@@ -18,21 +18,24 @@ export const REWARD_SCORE_THRESHOLD = 20;
 
 /** 원본 팀 버튼 순서 */
 export const KBO_TEAMS = [
-  'LG',
-  '두산',
-  'SSG',
-  '키움',
-  'KIA',
-  'KT',
-  '롯데',
-  '삼성',
-  '한화',
-  'NC',
+  "LG",
+  "두산",
+  "SSG",
+  "키움",
+  "KIA",
+  "KT",
+  "롯데",
+  "삼성",
+  "한화",
+  "NC",
 ] as const;
 
 export type KboTeam = (typeof KBO_TEAMS)[number];
 
-export const FIELD_GREEN = '#1b4332';
-export const FIELD_LIGHT = '#2d6a4f';
-export const BUTTON_BG = '#FCFFF2';
-export const BUTTON_TEXT = '#333333';
+export const FIELD_GREEN = "#1b4332";
+export const FIELD_LIGHT = "#2d6a4f";
+export const BUTTON_BG = "#FCFFF2";
+export const BUTTON_TEXT = "#333333";
+
+/** 리워드 다운받기 버튼 클릭 시 브라우저에서 열 이미지 URL */
+export const REWARD_PUBLIC_URL = "https://i.postimg.cc/8zs2ngQd/reward.png";

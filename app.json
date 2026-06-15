@@ -51,7 +51,9 @@
       [
         "expo-font",
         {
-          "fonts": ["./assets/font/AppleSDGothicNeoEB.ttf"]
+          "fonts": [
+            "./assets/font/AppleSDGothicNeoEB.ttf"
+          ]
         }
       ]
     ],

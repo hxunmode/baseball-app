@@ -20,10 +20,7 @@ import {
   type KboTeam,
 } from "./src/game/constants";
 import { GameBoard } from "./src/game/GameBoard";
-import {
-  isShareCancelled,
-  saveRewardImage,
-} from "./src/reward/saveRewardImage";
+import { openRewardInBrowser } from "./src/reward/openRewardInBrowser";
 import { appFont, fontAssets } from "./src/theme/fonts";
 
 type Screen =
@@ -120,53 +117,16 @@ export default function App() {
     go("game");
   }, [go]);
 
-  const runRewardShare = useCallback(async () => {
+  const downloadRewardImage = useCallback(async () => {
     try {
-      await saveRewardImage(REWARD_IMAGE, "share");
-    } catch (error) {
-      if (isShareCancelled(error)) {
-        return;
-      }
+      await openRewardInBrowser();
+    } catch {
       Alert.alert(
-        "저장 안내",
-        "공유 메뉴를 열지 못했습니다. 「다른 앱으로 공유」를 선택해 갤러리·파일·드라이브 등으로 저장해 주세요.",
+        "열기 실패",
+        "리워드 이미지 페이지를 열지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요.",
       );
     }
   }, []);
-
-  const runRewardGallerySave = useCallback(async () => {
-    try {
-      await saveRewardImage(REWARD_IMAGE, "gallery");
-      Alert.alert("저장 완료", "리워드 이미지가 사진 앨범에 저장되었습니다.");
-    } catch (error) {
-      if (isShareCancelled(error)) {
-        return;
-      }
-      Alert.alert(
-        "사진 앨범 저장 실패",
-        "공유 메뉴에서 갤러리·파일·다운로드 앱을 선택해 저장할 수 있습니다.",
-        [
-          { text: "공유하기", onPress: () => void runRewardShare() },
-          { text: "닫기", style: "cancel" },
-        ],
-      );
-    }
-  }, [runRewardShare]);
-
-  const downloadRewardImage = useCallback(() => {
-    Alert.alert(
-      "리워드 저장",
-      "사진 저장 또는 공유하기를 통해 리워드를 다운로드 받으세요",
-      [
-        { text: "공유하기", onPress: () => void runRewardShare() },
-        {
-          text: "사진 저장",
-          onPress: () => void runRewardGallerySave(),
-        },
-        { text: "취소", style: "cancel" },
-      ],
-    );
-  }, [runRewardGallerySave, runRewardShare]);
 
   const selectedScheduleImage = team ? TEAM_SCHEDULE_IMAGES[team] : undefined;
 
